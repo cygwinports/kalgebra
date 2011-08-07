@@ -1,0 +1,12 @@
+inherit kde4
+
+
+
+PKG_NAMES="${PN} libanalitza4 libanalitza-devel plasma-applet-${PN}"
+kalgebra_CONTENTS="--exclude=*plasmoid.desktop etc/ usr/bin/*.exe usr/share/"
+libanalitza4_CONTENTS="usr/bin/cyganalitza*-4.dll"
+libanalitza_devel_CONTENTS="usr/include/ usr/lib/lib*"
+plasma_applet_kalgebra_CONTENTS="usr/lib/kde4/plasma* usr/share/kde4/services/*plasmoid.desktop"
+
+# required for Cantor KAlgebra backend
+CYGCMAKE_ARGS="-DINSTALL_ANALITZA_HEADERS=ON"

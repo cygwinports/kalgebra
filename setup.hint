@@ -1,0 +1,4 @@
+category: KDE Math
+requires: libanalitza4 libgcc1 libGL1 libGLU1 libkdecore5 libQtCore4 libQtDeclarative4 libQtGui4 libQtOpenGL4 libQtScript4 libQtXml4 libreadline7 libstdc++6
+sdesc: "KDE algebraic calculator"
+ldesc: "KDE education suite"

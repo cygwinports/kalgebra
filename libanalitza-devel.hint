@@ -1,5 +1,0 @@
-category: KDE Math
-requires: libanalitza4 libkdecore-devel libQtCore4-devel
-external-source: kalgebra
-sdesc: "KDE algebra library (development)"
-ldesc: "KDE education suite"

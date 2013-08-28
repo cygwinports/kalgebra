@@ -1,0 +1,18 @@
+--- origsrc/kalgebra-4.10.5/mobile/declarative/CMakeLists.txt	2013-06-28 12:16:58.882413100 -0500
++++ src/kalgebra-4.10.5/mobile/declarative/CMakeLists.txt	2013-08-27 22:56:40.216107800 -0500
+@@ -5,7 +5,7 @@ include_directories(
+         ${CMAKE_BINARY_DIR}
+ )
+ 
+-kde4_add_library(analitzadeclarativeplugin SHARED analitzadeclarativeplugin.cpp graph2dmobile.cpp analitzawrapper.cpp)
++kde4_add_library(analitzadeclarativeplugin MODULE analitzadeclarativeplugin.cpp graph2dmobile.cpp analitzawrapper.cpp)
+ 
+ target_link_libraries(analitzadeclarativeplugin ${QT_QTCORE_LIBRARY} ${QT_QTGUI_LIBRARY} ${QT_QTDECLARATIVE_LIBRARY} ${ANALITZA_LIBRARY} ${ANALITZAGUI_LIBRARY} ${ANALITZAPLOT_LIBRARY})
+ 
+@@ -15,4 +15,4 @@ install(FILES qmldir DESTINATION ${IMPOR
+ install( FILES
+         qml/Graph2D.qml
+         DESTINATION ${IMPORTS_INSTALL_DIR}/org/kde/analitza
+-)
+\ No newline at end of file
++)

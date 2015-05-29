@@ -8,3 +8,5 @@ SUMMARY="KDE algebraic calculator"
 DESCRIPTION="Part of the KDE education suite"
 
 PATCH_URI="4.10.5-qml-module.patch"
+
+REQUIRES="kde-runtime"

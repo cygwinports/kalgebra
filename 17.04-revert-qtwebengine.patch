@@ -1,0 +1,148 @@
+Revert commit c3f7d08ac587bcd43d2090e973cca836be110a48
+
+--- origsrc/kalgebra-17.04.3/CMakeLists.txt	2017-07-10 19:14:30.000000000 -0500
++++ src/kalgebra-17.04.3/CMakeLists.txt	2017-07-14 01:21:54.014407400 -0500
+@@ -37,7 +37,7 @@ if(${MOBILE_BACKEND} STREQUAL "kde")
+     find_package(KF5ConfigWidgets ${KF5_VERSION} REQUIRED)
+     find_package(KF5WidgetsAddons ${KF5_VERSION} REQUIRED)
+     find_package(KF5KIO REQUIRED)
+-    find_package(Qt5WebEngineWidgets REQUIRED)
++    find_package(Qt5WebKitWidgets REQUIRED)
+     find_package(Qt5PrintSupport REQUIRED)
+     find_package(KF5DocTools)
+ 
+--- origsrc/kalgebra-17.04.3/src/CMakeLists.txt	2017-04-19 06:28:18.000000000 -0500
++++ src/kalgebra-17.04.3/src/CMakeLists.txt	2017-07-14 01:21:38.820477800 -0500
+@@ -14,7 +14,7 @@ file(GLOB ICONS_SRCS "${CMAKE_CURRENT_SO
+ ecm_add_app_icon(kalgebra_SRCS ICONS ${ICONS_SRCS})
+ 
+ add_executable(kalgebra ${kalgebra_SRCS})
+-target_link_libraries(kalgebra Qt5::Widgets Qt5::PrintSupport Qt5::WebEngineWidgets KF5::I18n
++target_link_libraries(kalgebra Qt5::Widgets Qt5::PrintSupport Qt5::WebKitWidgets KF5::I18n
+                                KF5::CoreAddons KF5::WidgetsAddons KF5::ConfigWidgets
+                                KF5::XmlGui # HelpMenu
+                                KF5::KIOCore
+--- origsrc/kalgebra-17.04.3/src/consolehtml.cpp	2017-04-19 06:28:18.000000000 -0500
++++ src/kalgebra-17.04.3/src/consolehtml.cpp	2017-07-14 01:21:38.823479500 -0500
+@@ -24,6 +24,7 @@
+ #include <qevent.h>
+ #include <QDir>
+ #include <qurlquery.h>
++#include <QWebFrame>
+ 
+ #include <KStandardAction>
+ #include <QMenu>
+@@ -35,24 +36,14 @@
+ #include <analitza/variables.h>
+ #include <analitza/expression.h>
+ 
+-class ConsolePage : public QWebEnginePage
+-{
+-public:
+-    ConsolePage(ConsoleHtml* parent) : QWebEnginePage(parent), m_console(parent) {}
+-
+-    bool acceptNavigationRequest(const QUrl &url, NavigationType type, bool isMainFrame) override {
+-        m_console->openClickedUrl(url);
+-        return false;
+-    }
+-
+-    ConsoleHtml* m_console;
+-};
+-
+ ConsoleHtml::ConsoleHtml(QWidget *parent)
+-    : QWebEngineView(parent), m_mode(Evaluation)
++    : QWebView(parent), m_mode(Evaluation)
+ {
+-    setPage(new ConsolePage(this));
+-
++    page()->setLinkDelegationPolicy(QWebPage::DelegateAllLinks);
++    setRenderHint(QPainter::TextAntialiasing);
++    
++    connect(this, &QWebView::linkClicked, this, &ConsoleHtml::openClickedUrl);
++    
+     QMetaObject::invokeMethod(this, "initialize", Qt::QueuedConnection);
+ }
+ 
+@@ -140,7 +131,7 @@ bool ConsoleHtml::addOperation(const Ana
+                 query.addQueryItem(QStringLiteral("func"), lambdaexp.toString());
+                 url.setQuery(query);
+                 
+-                options += i18n(" <a href='kalgebra:%1'>%2</a>", url.toString(), opt->caption());
++                options += i18n(" <a href='%1'>%2</a>", url.toString(), opt->caption());
+             }
+         }
+         
+@@ -149,7 +140,7 @@ bool ConsoleHtml::addOperation(const Ana
+         
+         a.insertVariable(QStringLiteral("ans"), res);
+         m_script += e; //Script won't have the errors
+-        newEntry = QString("<a title='%1' href='kalgebra:/query?id=copy&func=%2'><span class='exp'>%3</span></a><br />=<a title='kalgebra:%1' href='/query?id=copy&func=%4'><span class='result'>%5</span>").arg(i18n("Paste to Input")).arg(e.toString()).arg(e.toHtml()).arg(res.toString()).arg(result);
++        newEntry = QString("<a title='%1' href='/query?id=copy&func=%2'><span class='exp'>%3</span></a><br />=<a title='%1' href='/query?id=copy&func=%4'><span class='result'>%5</span>").arg(i18n("Paste to Input")).arg(e.toString()).arg(e.toHtml()).arg(res.toString()).arg(result);
+     } else {
+         m_htmlLog += i18n("<ul class='error'>Error: <b>%1</b><li>%2</li></ul>", input.toHtmlEscaped(), a.errors().join(QStringLiteral("</li>\n<li>")));
+     }
+@@ -253,7 +244,6 @@ bool ConsoleHtml::saveLog(const QUrl& pa
+     return correct;
+ }
+ 
+-
+ void ConsoleHtml::updateView(const QString& newEntry, const QString& options)
+ {
+     QByteArray code;
+@@ -271,15 +261,12 @@ void ConsoleHtml::updateView(const QStri
+     }
+     code += "</body></html>";
+ 
+-    page()->setHtml(code);
++    setContent(code);
+     
+     emit changed();
+ 
+-    QObject* o = new QObject;
+-    connect(this, &QWebEngineView::loadFinished, o, [this, o](){
+-        page()->runJavaScript(QStringLiteral("window.scrollTo(0, document.body.scrollHeight);"));
+-        delete o;
+-    });
++    QWebFrame* mf = page()->mainFrame();
++    mf->setScrollBarValue(Qt::Vertical, mf->scrollBarMaximum(Qt::Vertical));
+ }
+ 
+ void ConsoleHtml::copy() const
+--- origsrc/kalgebra-17.04.3/src/consolehtml.h	2017-04-19 06:28:18.000000000 -0500
++++ src/kalgebra-17.04.3/src/consolehtml.h	2017-07-14 01:21:38.825978700 -0500
+@@ -20,7 +20,7 @@
+ #define CONSOLE_H
+ 
+ #include <QWidget>
+-#include <QWebEngineView>
++#include <QWebView>
+ 
+ #include <analitza/analyzer.h>
+ 
+@@ -41,7 +41,7 @@ class InlineOptions
+  *    @author Aleix Pol Gonzalez
+  */
+ 
+-class ConsoleHtml : public QWebEngineView
++class ConsoleHtml : public QWebView
+ {
+     Q_OBJECT
+     public:
+@@ -55,7 +55,7 @@ class ConsoleHtml : public QWebEngineVie
+         ConsoleHtml(QWidget *parent = 0);
+         
+         /** Destructor. */
+-        ~ConsoleHtml() override;
++        virtual ~ConsoleHtml();
+         
+         /** Retrieves a pointer to the Analitza calculator associated. */
+         Analitza::Analyzer* analitza() { return &a; }
+@@ -68,7 +68,7 @@ class ConsoleHtml : public QWebEngineVie
+         
+         void addOptionsObserver(InlineOptions* opt) { m_options += opt; }
+ 
+-        void contextMenuEvent(QContextMenuEvent* ev) override;
++        virtual void contextMenuEvent(QContextMenuEvent* ev);
+ 
+     public Q_SLOTS:
+         /** Adds the operation defined by the expression @p e. */
